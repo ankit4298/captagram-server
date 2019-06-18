@@ -4,9 +4,17 @@
         <servlet-name>GenCaption</servlet-name>
         <servlet-class>core.GenCaption</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>RefreshCaptions</servlet-name>
+        <servlet-class>core.RefreshCaptions</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>GenCaption</servlet-name>
         <url-pattern>/GenCaption</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RefreshCaptions</servlet-name>
+        <url-pattern>/RefreshCaptions</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

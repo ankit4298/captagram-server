@@ -22,46 +22,36 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author ANKIT
  */
-public class GenCaption extends HttpServlet {
+public class RefreshCaptions extends HttpServlet {
 
     static Connection con;
     static Statement stmt;
     static ResultSet rs;
     static PreparedStatement ps;
-
+    
     ArrayList<String> tags;
-    ArrayList<String> keywords;
     ArrayList<String> captions;
-
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    
+   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-
-            // get tags from url and tokenize
-            String url_tags = request.getParameter("tags");
-
-            tags = new ArrayList<>();
-            keywords = new ArrayList<>();
-            captions = new ArrayList<>();
-
-            StringTokenizer st = new StringTokenizer(url_tags, ",");
+            
+            // get common tags from client
+            String ctags=request.getParameter("ctags");
+            
+            tags=new ArrayList<>();
+            captions=new ArrayList<>();
+            
+            StringTokenizer st = new StringTokenizer(ctags, ",");
             while (st.hasMoreTokens()) {
                 tags.add(st.nextToken());
             }
-
-            keywords = getKeywords();
-
-            out.print("tags: " + tags);
-            out.print("<br>db keywords: " + keywords);
-
-            tags.retainAll(keywords);
-            out.print("<br>common: " + tags);
-
+            
             String x=getRandomItem(tags);
             captions = getCaption(x);
             out.print("<hr><b>"+x+"</b> captions<hr>" + captions);
-           
+            
         }
     }
 
@@ -104,35 +94,6 @@ public class GenCaption extends HttpServlet {
         return "Short description";
     }// </editor-fold>
 
-    private static ArrayList<String> getKeywords() {
-
-        ArrayList<String> al = new ArrayList<>();
-        try {
-            con = DBConnection.getDBConnection();
-            stmt = con.createStatement();
-
-            String sql = "select tag from keywords_details";
-            rs = stmt.executeQuery(sql);
-
-            while (rs.next()) {
-                al.add(rs.getString("tag"));
-            }
-
-        } catch (SQLException ex) {
-            System.out.println(" GenCaptions : SQLExcaption \n" + ex);
-        } finally {
-            try {
-                rs.close();
-                stmt.close();
-                con.close();
-            } catch (Exception e) {
-                System.out.println(" GenCaptions : Finally block error \n" + e);
-            }
-        }
-
-        return al;
-    }
-
     private static ArrayList<String> getCaption(String one_tag) {
 
         ArrayList<String> al = new ArrayList<>();
@@ -159,12 +120,11 @@ public class GenCaption extends HttpServlet {
     public static String getRandomItem(ArrayList<String> al) {
         return al.get(new Random().nextInt(al.size()));
     }
-
+    
     public String jsonResponse() throws IOException {
 
-        // send common tags and captions to client
+        // send captions to client
         
         return null;
     }
-
 }
