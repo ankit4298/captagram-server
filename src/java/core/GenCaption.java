@@ -3,6 +3,7 @@ package core;
 import database.DBConnection;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +18,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 /**
  *
@@ -55,13 +58,16 @@ public class GenCaption extends HttpServlet {
             out.print("tags: " + tags);
             out.print("<br>db keywords: " + keywords);
 
+            // common tags
             tags.retainAll(keywords);
             out.print("<br>common: " + tags);
 
-            String x=getRandomItem(tags);
+            String x = getRandomItem(tags);
             captions = getCaption(x);
-            out.print("<hr><b>"+x+"</b> captions<hr>" + captions);
-           
+            out.print("<hr><b>" + x + "</b> captions<hr>" + captions);
+
+            out.print("<br><hr>RESPONSE to Client: <br>" + jsonResponse(tags, captions));
+
         }
     }
 
@@ -126,7 +132,7 @@ public class GenCaption extends HttpServlet {
                 stmt.close();
                 con.close();
             } catch (Exception e) {
-                System.out.println(" GenCaptions : Finally block error \n" + e);
+                System.out.println("GenCaptions : Finally block error \n" + e);
             }
         }
 
@@ -160,11 +166,29 @@ public class GenCaption extends HttpServlet {
         return al.get(new Random().nextInt(al.size()));
     }
 
-    public String jsonResponse() throws IOException {
-
+    public String jsonResponse(ArrayList<String> common_tags, ArrayList<String> dbcaptions) throws IOException {
         // send common tags and captions to client
-        
-        return null;
+        String jsonText;
+        JSONObject mainJO = new JSONObject();
+        JSONArray ctags = new JSONArray();
+        JSONArray captions = new JSONArray();
+
+        for (String x : common_tags) {
+            ctags.add(x);
+        }
+
+        for (String x : dbcaptions) {
+            captions.add(x);
+        }
+
+        mainJO.put("ctags", ctags);
+        mainJO.put("captions", captions);
+
+        StringWriter out = new StringWriter();
+        mainJO.writeJSONString(out);
+        jsonText = out.toString();
+
+        return jsonText;
     }
 
 }
