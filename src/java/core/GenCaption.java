@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /**
  *
@@ -53,21 +54,24 @@ public class GenCaption extends HttpServlet {
                 tags.add(st.nextToken());
             }
 
+            // get keywords from db
             keywords = getKeywords();
-
-            out.print("tags: " + tags);
-            out.print("<br>db keywords: " + keywords);
 
             // common tags
             tags.retainAll(keywords);
-            out.print("<br>common: " + tags);
+            if (tags.isEmpty()) {
+                tags.add("general");
+            }
 
-            String x = getRandomItem(tags);
-            captions = getCaption(x);
-            out.print("<hr><b>" + x + "</b> captions<hr>" + captions);
+            // get random tag from common tags to fetch caption
+            String current_tag = getRandomItem(tags);
+            captions = getCaption(current_tag);
 
-            out.print("<br><hr>RESPONSE to Client: <br>" + jsonResponse(tags, captions));
+            String jsonText = jsonResponse(tags, captions, current_tag);
+            out.print(jsonText);
 
+        } catch (Exception ex) {
+            Logger.getLogger(GenCaption.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -166,7 +170,7 @@ public class GenCaption extends HttpServlet {
         return al.get(new Random().nextInt(al.size()));
     }
 
-    public String jsonResponse(ArrayList<String> common_tags, ArrayList<String> dbcaptions) throws IOException {
+    public static String jsonResponse(ArrayList<String> common_tags, ArrayList<String> dbcaptions, String current_tag) throws IOException {
         // send common tags and captions to client
         String jsonText;
         JSONObject mainJO = new JSONObject();
@@ -183,12 +187,33 @@ public class GenCaption extends HttpServlet {
 
         mainJO.put("ctags", ctags);
         mainJO.put("captions", captions);
+        mainJO.put("current_tag", current_tag);
 
         StringWriter out = new StringWriter();
         mainJO.writeJSONString(out);
         jsonText = out.toString();
 
         return jsonText;
+    }
+
+    public static void readJSON(String jsonText) throws Exception {
+
+        ArrayList<String> al = new ArrayList<>();
+
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(jsonText);
+
+        JSONArray j1 = (JSONArray) json.get("ctags");
+        JSONArray j2 = (JSONArray) json.get("captions");
+
+        for (Object x : j1) {
+            System.out.println(x);
+        }
+
+        for (Object x : j2) {
+            System.out.println(x);
+        }
+
     }
 
 }

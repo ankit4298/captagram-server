@@ -3,6 +3,7 @@ package core;
 import database.DBConnection;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,6 +18,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 /**
  *
@@ -28,30 +31,32 @@ public class RefreshCaptions extends HttpServlet {
     static Statement stmt;
     static ResultSet rs;
     static PreparedStatement ps;
-    
+
     ArrayList<String> tags;
     ArrayList<String> captions;
-    
-   protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            
+
             // get common tags from client
-            String ctags=request.getParameter("ctags");
-            
-            tags=new ArrayList<>();
-            captions=new ArrayList<>();
-            
+            String ctags = request.getParameter("ctags");
+
+            tags = new ArrayList<>();
+            captions = new ArrayList<>();
+
             StringTokenizer st = new StringTokenizer(ctags, ",");
             while (st.hasMoreTokens()) {
                 tags.add(st.nextToken());
             }
-            
-            String x=getRandomItem(tags);
-            captions = getCaption(x);
-            out.print("<hr><b>"+x+"</b> captions<hr>" + captions);
-            
+
+            String current_tag = getRandomItem(tags);
+            captions = getCaption(current_tag);
+
+            String jsonText = jsonResponse(tags, captions, current_tag);
+            out.print(jsonText);
+
         }
     }
 
@@ -120,11 +125,30 @@ public class RefreshCaptions extends HttpServlet {
     public static String getRandomItem(ArrayList<String> al) {
         return al.get(new Random().nextInt(al.size()));
     }
-    
-    public String jsonResponse() throws IOException {
 
-        // send captions to client
-        
-        return null;
+    public static String jsonResponse(ArrayList<String> common_tags, ArrayList<String> dbcaptions, String current_tag) throws IOException {
+        // send common tags and captions to client
+        String jsonText;
+        JSONObject mainJO = new JSONObject();
+        JSONArray ctags = new JSONArray();
+        JSONArray captions = new JSONArray();
+
+        for (String x : common_tags) {
+            ctags.add(x);
+        }
+
+        for (String x : dbcaptions) {
+            captions.add(x);
+        }
+
+        mainJO.put("ctags", ctags);
+        mainJO.put("captions", captions);
+        mainJO.put("current_tag", current_tag);
+
+        StringWriter out = new StringWriter();
+        mainJO.writeJSONString(out);
+        jsonText = out.toString();
+
+        return jsonText;
     }
 }
